@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ShoppingCart, Search, Scan, CreditCard, Banknote, Smartphone, User, Receipt, Plus, Minus, X, Store, Bell, Settings, Menu } from 'lucide-react';
+import { ShoppingCart, Search, Scan, CreditCard, Banknote, Smartphone, User, Receipt, Plus, Minus, X, Store, Bell, Settings, Menu, UtensilsCrossed, ChefHat, Users, ClipboardList } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
@@ -9,6 +9,10 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { DashboardWidgets } from '@/components/pos/DashboardWidgets';
 import { TransactionHistory } from '@/components/pos/TransactionHistory';
 import { QuickActions } from '@/components/pos/QuickActions';
+import { TableManagement } from '@/components/pos/TableManagement';
+import { KitchenDisplay } from '@/components/pos/KitchenDisplay';
+import { OrderTypeSelector } from '@/components/pos/OrderTypeSelector';
+import { StaffWorkflow } from '@/components/pos/StaffWorkflow';
 
 interface Product {
   id: string;
@@ -30,27 +34,36 @@ const POS = () => {
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [customerInfo, setCustomerInfo] = useState({ name: '', phone: '' });
   const [paymentMethod, setPaymentMethod] = useState<'cash' | 'card' | 'digital'>('cash');
-  const [activeView, setActiveView] = useState<'pos' | 'dashboard'>('dashboard');
+  const [activeView, setActiveView] = useState<'dashboard' | 'pos' | 'tables' | 'kitchen' | 'staff' | 'order-type'>('dashboard');
   const [discount, setDiscount] = useState(0);
   const [completedTransactions, setCompletedTransactions] = useState(0);
+  const [selectedTableId, setSelectedTableId] = useState<string | null>(null);
+  const [orderTypeData, setOrderTypeData] = useState<any>(null);
 
-  // Sample products data
+  // Restaurant menu items
   const products: Product[] = [
-    { id: '1', name: 'Apple iPhone 15', price: 999.99, barcode: '1234567890123', category: 'electronics', stock: 15 },
-    { id: '2', name: 'Organic Bananas', price: 2.49, barcode: '1234567890124', category: 'produce', stock: 50 },
-    { id: '3', name: 'Coca-Cola 2L', price: 3.99, barcode: '1234567890125', category: 'beverages', stock: 30 },
-    { id: '4', name: 'Bread Loaf', price: 2.99, barcode: '1234567890126', category: 'bakery', stock: 25 },
-    { id: '5', name: 'Milk 1L', price: 4.99, barcode: '1234567890127', category: 'dairy', stock: 40 },
-    { id: '6', name: 'Samsung TV 55"', price: 799.99, barcode: '1234567890128', category: 'electronics', stock: 8 },
+    { id: '1', name: 'Margherita Pizza', price: 16.99, barcode: '1234567890123', category: 'pizza', stock: 25 },
+    { id: '2', name: 'Caesar Salad', price: 12.49, barcode: '1234567890124', category: 'salads', stock: 30 },
+    { id: '3', name: 'Grilled Chicken', price: 18.99, barcode: '1234567890125', category: 'mains', stock: 20 },
+    { id: '4', name: 'Fish & Chips', price: 15.99, barcode: '1234567890126', category: 'mains', stock: 18 },
+    { id: '5', name: 'Chocolate Cake', price: 7.99, barcode: '1234567890127', category: 'desserts', stock: 15 },
+    { id: '6', name: 'Coca-Cola', price: 3.99, barcode: '1234567890128', category: 'beverages', stock: 50 },
+    { id: '7', name: 'BBQ Burger', price: 14.99, barcode: '1234567890129', category: 'burgers', stock: 22 },
+    { id: '8', name: 'Pasta Carbonara', price: 16.49, barcode: '1234567890130', category: 'pasta', stock: 20 },
+    { id: '9', name: 'French Fries', price: 5.99, barcode: '1234567890131', category: 'sides', stock: 40 },
+    { id: '10', name: 'Tiramisu', price: 8.99, barcode: '1234567890132', category: 'desserts', stock: 12 }
   ];
 
   const categories = [
     { id: 'all', name: 'All Items', color: 'bg-secondary' },
-    { id: 'electronics', name: 'Electronics', color: 'bg-primary' },
-    { id: 'produce', name: 'Produce', color: 'bg-success' },
-    { id: 'beverages', name: 'Beverages', color: 'bg-warning' },
-    { id: 'bakery', name: 'Bakery', color: 'bg-destructive' },
-    { id: 'dairy', name: 'Dairy', color: 'bg-secondary' },
+    { id: 'pizza', name: 'Pizza', color: 'bg-primary' },
+    { id: 'burgers', name: 'Burgers', color: 'bg-success' },
+    { id: 'mains', name: 'Main Courses', color: 'bg-warning' },
+    { id: 'salads', name: 'Salads', color: 'bg-destructive' },
+    { id: 'pasta', name: 'Pasta', color: 'bg-secondary' },
+    { id: 'sides', name: 'Sides', color: 'bg-muted' },
+    { id: 'beverages', name: 'Beverages', color: 'bg-primary' },
+    { id: 'desserts', name: 'Desserts', color: 'bg-success' }
   ];
 
   const filteredProducts = products.filter(product => {
@@ -119,6 +132,22 @@ const POS = () => {
     console.log('Adding customer...');
   };
 
+  const handleOrderStart = (tableId: string) => {
+    setSelectedTableId(tableId);
+    setActiveView('order-type');
+  };
+
+  const handleOrderTypeSelect = (orderData: any) => {
+    setOrderTypeData(orderData);
+    setActiveView('pos');
+  };
+
+  const handleBackToTables = () => {
+    setActiveView('tables');
+    setSelectedTableId(null);
+    setOrderTypeData(null);
+  };
+
   return (
     <div className="min-h-screen bg-background">
       {/* Top Header */}
@@ -134,20 +163,46 @@ const POS = () => {
             </div>
           </div>
           
-          <div className="flex items-center space-x-3">
+          <div className="flex items-center space-x-2">
             <Button
               variant={activeView === 'dashboard' ? 'default' : 'outline'}
               onClick={() => setActiveView('dashboard')}
               size="sm"
             >
+              <Store className="h-3 w-3 mr-1" />
               Dashboard
+            </Button>
+            <Button
+              variant={activeView === 'tables' ? 'default' : 'outline'}
+              onClick={() => setActiveView('tables')}
+              size="sm"
+            >
+              <UtensilsCrossed className="h-3 w-3 mr-1" />
+              Tables
+            </Button>
+            <Button
+              variant={activeView === 'kitchen' ? 'default' : 'outline'}
+              onClick={() => setActiveView('kitchen')}
+              size="sm"
+            >
+              <ChefHat className="h-3 w-3 mr-1" />
+              Kitchen
+            </Button>
+            <Button
+              variant={activeView === 'staff' ? 'default' : 'outline'}
+              onClick={() => setActiveView('staff')}
+              size="sm"
+            >
+              <Users className="h-3 w-3 mr-1" />
+              Staff
             </Button>
             <Button
               variant={activeView === 'pos' ? 'default' : 'outline'}
               onClick={() => setActiveView('pos')}
               size="sm"
             >
-              POS
+              <ClipboardList className="h-3 w-3 mr-1" />
+              Orders
             </Button>
             
             <div className="flex items-center space-x-2">
@@ -180,13 +235,24 @@ const POS = () => {
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <TransactionHistory />
                 <Card className="p-6">
-                  <h3 className="text-lg font-semibold mb-4">Sales Chart</h3>
+                  <h3 className="text-lg font-semibold mb-4">Restaurant Analytics</h3>
                   <div className="h-64 bg-muted rounded-lg flex items-center justify-center text-muted-foreground">
-                    Sales chart visualization would go here
+                    Restaurant analytics visualization would go here
                   </div>
                 </Card>
               </div>
             </div>
+          ) : activeView === 'tables' ? (
+            <TableManagement onOrderStart={handleOrderStart} />
+          ) : activeView === 'kitchen' ? (
+            <KitchenDisplay />
+          ) : activeView === 'staff' ? (
+            <StaffWorkflow />
+          ) : activeView === 'order-type' ? (
+            <OrderTypeSelector 
+              onOrderTypeSelect={handleOrderTypeSelect}
+              onBack={handleBackToTables}
+            />
           ) : (
             <div className="space-y-6">{/* POS Interface */}
 
@@ -233,10 +299,16 @@ const POS = () => {
                   >
                     <div className="space-y-3">
                       <div className="aspect-square bg-muted rounded-lg flex items-center justify-center">
-                        <span className="text-2xl">{product.category === 'electronics' ? '📱' : 
-                          product.category === 'produce' ? '🍎' : 
+                        <span className="text-3xl">
+                          {product.category === 'pizza' ? '🍕' : 
+                          product.category === 'burgers' ? '🍔' : 
+                          product.category === 'mains' ? '🍗' : 
+                          product.category === 'salads' ? '🥗' : 
+                          product.category === 'pasta' ? '🍝' : 
+                          product.category === 'sides' ? '🍟' : 
                           product.category === 'beverages' ? '🥤' : 
-                          product.category === 'bakery' ? '🍞' : '🥛'}</span>
+                          product.category === 'desserts' ? '🍰' : '🍽️'}
+                        </span>
                       </div>
                       <div>
                         <h3 className="font-medium group-hover:text-primary transition-colors">
