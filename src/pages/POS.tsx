@@ -13,6 +13,7 @@ import { TableManagement } from '@/components/pos/TableManagement';
 import { KitchenDisplay } from '@/components/pos/KitchenDisplay';
 import { OrderTypeSelector } from '@/components/pos/OrderTypeSelector';
 import { StaffWorkflow } from '@/components/pos/StaffWorkflow';
+import { EnhancedCart } from '@/components/pos/EnhancedCart';
 
 interface Product {
   id: string;
@@ -137,6 +138,10 @@ const POS = () => {
     setActiveView('order-type');
   };
 
+  const handleViewSwitch = (view: string) => {
+    setActiveView(view as any);
+  };
+
   const handleOrderTypeSelect = (orderData: any) => {
     setOrderTypeData(orderData);
     setActiveView('pos');
@@ -243,9 +248,9 @@ const POS = () => {
               </div>
             </div>
           ) : activeView === 'tables' ? (
-            <TableManagement onOrderStart={handleOrderStart} />
+            <TableManagement onOrderStart={handleOrderStart} onViewSwitch={handleViewSwitch} />
           ) : activeView === 'kitchen' ? (
-            <KitchenDisplay />
+            <KitchenDisplay staffFilter={undefined} />
           ) : activeView === 'staff' ? (
             <StaffWorkflow />
           ) : activeView === 'order-type' ? (
@@ -335,188 +340,29 @@ const POS = () => {
 
         </div>
 
-        {/* Right Sidebar - Cart and Quick Actions */}
-        <div className="w-96 bg-pos-cart border-l border-border flex flex-col">
-          {/* Cart Header */}
-          <div className="p-4 border-b border-border">
-            <div className="flex items-center justify-between">
-              <h2 className="text-lg font-bold">Shopping Cart</h2>
-              <Badge variant="secondary">{cart.length} items</Badge>
-            </div>
-          </div>
-
-          {/* Customer Info */}
-          <div className="p-3 border-b border-border space-y-2">
-            <div className="flex items-center space-x-2 mb-2">
-              <User className="h-4 w-4 text-muted-foreground" />
-              <span className="text-sm font-medium">Customer</span>
-            </div>
-            <Input
-              placeholder="Customer name"
-              value={customerInfo.name}
-              onChange={(e) => setCustomerInfo(prev => ({ ...prev, name: e.target.value }))}
-              className="h-8"
-            />
-            <Input
-              placeholder="Phone number"
-              value={customerInfo.phone}
-              onChange={(e) => setCustomerInfo(prev => ({ ...prev, phone: e.target.value }))}
-              className="h-8"
-            />
-          </div>
-
-          {/* Cart Items */}
-          <ScrollArea className="flex-1 p-3">
-            {cart.length === 0 ? (
-              <div className="text-center text-muted-foreground py-8">
-                <ShoppingCart className="h-12 w-12 mx-auto mb-3 opacity-50" />
-                <p>Cart is empty</p>
-                <p className="text-sm">Add products to get started</p>
-              </div>
-            ) : (
-              <div className="space-y-2">
-                {cart.map(item => (
-                  <Card key={item.id} className="p-2">
-                    <div className="space-y-2">
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <h4 className="font-medium text-sm">{item.name}</h4>
-                          <p className="text-xs text-muted-foreground">${item.price.toFixed(2)} each</p>
-                        </div>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => removeFromCart(item.id)}
-                          className="h-5 w-5 p-0 text-destructive hover:text-destructive"
-                        >
-                          <X className="h-3 w-3" />
-                        </Button>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-1">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => updateCartQuantity(item.id, item.quantity - 1)}
-                            className="h-6 w-6 p-0"
-                          >
-                            <Minus className="h-3 w-3" />
-                          </Button>
-                          <span className="w-8 text-center text-sm font-medium">{item.quantity}</span>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => updateCartQuantity(item.id, item.quantity + 1)}
-                            className="h-6 w-6 p-0"
-                          >
-                            <Plus className="h-3 w-3" />
-                          </Button>
-                        </div>
-                        <span className="font-bold text-sm">
-                          ${(item.price * item.quantity).toFixed(2)}
-                        </span>
-                      </div>
-                    </div>
-                  </Card>
-                ))}
-              </div>
-            )}
-          </ScrollArea>
-
-          {/* Totals and Payment */}
-          {cart.length > 0 && (
-            <div className="border-t border-border p-4 space-y-4">
-              {/* Totals */}
-              <div className="space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span>Subtotal:</span>
-                  <span>${subtotal.toFixed(2)}</span>
-                </div>
-                {discount > 0 && (
-                  <div className="flex justify-between text-sm text-success">
-                    <span>Discount ({discount}%):</span>
-                    <span>-${discountAmount.toFixed(2)}</span>
-                  </div>
-                )}
-                <div className="flex justify-between text-sm">
-                  <span>Tax (8%):</span>
-                  <span>${tax.toFixed(2)}</span>
-                </div>
-                <Separator />
-                <div className="flex justify-between text-lg font-bold text-pos-total">
-                  <span>Total:</span>
-                  <span>${total.toFixed(2)}</span>
-                </div>
-              </div>
-
-              {/* Payment Methods */}
-              <div className="space-y-2">
-                <span className="text-sm font-medium">Payment Method</span>
-                <div className="grid grid-cols-3 gap-1">
-                  <Button
-                    variant={paymentMethod === 'cash' ? 'default' : 'outline'}
-                    onClick={() => setPaymentMethod('cash')}
-                    className="p-2 h-auto flex-col space-y-1"
-                    size="sm"
-                  >
-                    <Banknote className="h-3 w-3" />
-                    <span className="text-xs">Cash</span>
-                  </Button>
-                  <Button
-                    variant={paymentMethod === 'card' ? 'default' : 'outline'}
-                    onClick={() => setPaymentMethod('card')}
-                    className="p-2 h-auto flex-col space-y-1"
-                    size="sm"
-                  >
-                    <CreditCard className="h-3 w-3" />
-                    <span className="text-xs">Card</span>
-                  </Button>
-                  <Button
-                    variant={paymentMethod === 'digital' ? 'default' : 'outline'}
-                    onClick={() => setPaymentMethod('digital')}
-                    className="p-2 h-auto flex-col space-y-1"
-                    size="sm"
-                  >
-                    <Smartphone className="h-3 w-3" />
-                    <span className="text-xs">Digital</span>
-                  </Button>
-                </div>
-              </div>
-
-              {/* Checkout Buttons */}
-              <div className="space-y-2">
-                <Button
-                  onClick={handleCheckout}
-                  className="w-full h-10 font-semibold bg-primary hover:bg-primary-hover"
-                  size="sm"
-                >
-                  <Receipt className="h-4 w-4 mr-2" />
-                  Complete Sale
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => {setCart([]); setDiscount(0);}}
-                  className="w-full"
-                  size="sm"
-                >
-                  Clear Cart
-                </Button>
-              </div>
-            </div>
-          )}
-
-          {/* Quick Actions Sidebar */}
-          <div className="p-3 border-t border-border overflow-y-auto max-h-96">
-            <QuickActions 
-              onApplyDiscount={handleApplyDiscount}
-              onAddCustomer={handleAddCustomer}
-              cartTotal={total}
-            />
-          </div>
-        </div>
+        {/* Enhanced Cart Sidebar */}
+        <EnhancedCart
+          cart={cart}
+          customerInfo={customerInfo}
+          paymentMethod={paymentMethod}
+          discount={discount}
+          subtotal={subtotal}
+          tax={tax}
+          total={total}
+          selectedTable={selectedTableId ? { id: selectedTableId, number: parseInt(selectedTableId), server: 'Alice' } : undefined}
+          onUpdateQuantity={updateCartQuantity}
+          onRemoveItem={removeFromCart}
+          onCustomerInfoChange={setCustomerInfo}
+          onPaymentMethodChange={setPaymentMethod}
+          onApplyDiscount={handleApplyDiscount}
+          onCheckout={handleCheckout}
+          onAddNote={(itemId, note) => {
+            // Handle adding notes to items
+            console.log('Adding note to item:', itemId, note);
+          }}
+        />
       </div>
     </div>
   );
-};
-
+  );
 export default POS;

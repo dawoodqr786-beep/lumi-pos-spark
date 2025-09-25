@@ -29,7 +29,11 @@ interface KitchenOrder {
   specialInstructions?: string;
 }
 
-export const KitchenDisplay: React.FC = () => {
+interface KitchenDisplayProps {
+  staffFilter?: string;
+}
+
+export const KitchenDisplay: React.FC<KitchenDisplayProps> = ({ staffFilter }) => {
   const [orders, setOrders] = useState<KitchenOrder[]>([
     {
       id: '1',
@@ -139,11 +143,11 @@ export const KitchenDisplay: React.FC = () => {
     setOrders(prev => prev.filter(order => order.id !== orderId));
   };
 
-  const filteredOrders = selectedStation === 'all' 
-    ? orders 
-    : orders.filter(order => 
-        order.items.some(item => item.station === selectedStation)
-      );
+  const filteredOrders = orders.filter(order => {
+    const stationMatch = selectedStation === 'all' || order.items.some(item => item.station === selectedStation);
+    const staffMatch = !staffFilter || order.server === staffFilter;
+    return stationMatch && staffMatch;
+  });
 
   return (
     <div className="space-y-6">
@@ -151,7 +155,14 @@ export const KitchenDisplay: React.FC = () => {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold text-primary">Kitchen Display System</h2>
-          <p className="text-muted-foreground">Monitor and manage active orders</p>
+          <div className="flex items-center space-x-4">
+            <p className="text-muted-foreground">Monitor and manage active orders</p>
+            {staffFilter && (
+              <Badge variant="outline" className="text-sm">
+                Staff: {staffFilter}
+              </Badge>
+            )}
+          </div>
         </div>
         
         <div className="flex items-center space-x-4">
@@ -160,7 +171,7 @@ export const KitchenDisplay: React.FC = () => {
             {currentTime.toLocaleTimeString()}
           </Badge>
           <Badge variant="secondary">
-            {orders.length} Active Orders
+            {filteredOrders.length} Active Orders
           </Badge>
         </div>
       </div>
